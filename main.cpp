@@ -27,6 +27,13 @@ public:
         return (number == element->number) && (character == element->character);
     }
 
+    bool compare(Element* element) {
+        if(element == nullptr){
+            return false;
+        }
+        return number < element->number ? true : false;
+    }
+
     Element(){
         number = 1 + rand() % 10000;
         character = 'A' + (rand() % 26);
@@ -40,35 +47,90 @@ public:
     T* Last = nullptr;
     size_t size = 0;
 
+    void addFirstExisting(T* newElement){
+        First = newElement;
+        Last = newElement;
+        size++;
+    }
+
     void addOnBack(T* newElement){
-        if(First == nullptr && Last == nullptr) {
-            First = newElement;
-            Last = newElement;
+        if(checkIfEmpty()) {
+            addFirstExisting(newElement);
         }
         else {
             Last->nextElement = newElement;
             newElement->prevElement = Last;
             Last = newElement;
+            size++;
         }
-        size++;
     }
 
     void addOnFront(T* newElement){
-        if(First == nullptr && Last == nullptr) {
-            First = newElement;
-            Last = newElement;
+        if(checkIfEmpty()) {
+            addFirstExisting(newElement);
         }
         else {
             First->prevElement = newElement;
             newElement->nextElement = First;
             First = newElement;
+            size++;
         }
-        size++;
+    }
+
+    void addBefore(T* newElement, T* currentElement){
+        if (currentElement == First){
+            addOnFront(newElement);
+            return;
+        }
+            newElement->nextElement = currentElement;
+            newElement->prevElement = currentElement->prevElement;
+            currentElement->prevElement->nextElement = newElement;
+            currentElement->prevElement = newElement;
+            size++;
+    }
+
+    void addAfter(T* newElement, T* currentElement) {
+        if (currentElement == Last){
+            addOnBack(newElement);
+            return;
+        }
+            newElement->nextElement = currentElement->nextElement;
+            newElement->prevElement = currentElement;
+            currentElement->nextElement = newElement;
+            currentElement->nextElement->prevElement = newElement;
+            size++;
+    }
+
+    void addWithOrder(T* newElement){
+        if(checkIfEmpty()){
+            addFirstExisting(newElement);
+            return;
+        }
+        T* currentElement = First;
+        while(currentElement->nextElement != nullptr && !(newElement->compare(currentElement))){
+            currentElement = currentElement->nextElement;
+        }
+        if(newElement->compare(currentElement)) {
+            addBefore(newElement, currentElement);
+        }
+        else{
+            addAfter(newElement, currentElement);
+        }
+    }
+
+    bool checkIfEmpty(){
+       return First == nullptr && Last == nullptr ? true : false;
     }
 
     bool removeLast(){
-
-        T* newLast = nullptr;
+        if(Last == First) {
+            delete Last;
+            First = nullptr;
+            Last = nullptr;
+            size--;
+            return true;
+        }
+        T* newLast;
         Last->prevElement->nextElement = nullptr;
         newLast = Last->prevElement;
         delete Last;
@@ -78,7 +140,14 @@ public:
     }
 
     bool removeFirst(){
-        T* newFirst = nullptr;
+        if(First == Last) {
+            delete First;
+            First = nullptr;
+            Last = nullptr;
+            size--;
+            return true;
+        }
+        T* newFirst;
         First->nextElement->prevElement = nullptr;
         newFirst = First->nextElement;
         delete First;
@@ -194,7 +263,7 @@ public:
 
     void clearList(){
         T* elementToRemove = First;
-        T* nextElement = nullptr;
+        T* nextElement;
         for (int i = 0; i < size; ++i) {
             nextElement = elementToRemove->nextElement;
             delete elementToRemove;
@@ -207,9 +276,9 @@ public:
 };
 
 int main() {
-    srand(time(NULL));
+    srand(time(nullptr));
 
-    const int MAX_ORDER = 7; // Max order of number of elements
+    const int MAX_ORDER = 5; // Max order of number of elements
 
     class LinkedList<Element>* List = new LinkedList<Element>; // Creating a new list
 
@@ -218,14 +287,14 @@ int main() {
         clock_t timeBefore, timeAfter;
 
         double timeTaken, avgTime;
-        const int numberOfElements = pow(10,order);
+        const double numberOfElements = pow(10,order);
 
         // Adding random elements to the list
         timeBefore = clock();
 
         for (int i = 0; i < numberOfElements; ++i) {
             class Element *newElement = new Element();
-            List->addOnFront(newElement);
+            List->addWithOrder(newElement);
         }
 
         timeAfter = clock();
@@ -243,7 +312,7 @@ int main() {
         List->printListInfo();
 
         // Finding and removing random elements from the list
-        const int numberOfTries = pow(10,5);
+        const double numberOfTries = pow(10,6);
 
         timeBefore = clock();
 
